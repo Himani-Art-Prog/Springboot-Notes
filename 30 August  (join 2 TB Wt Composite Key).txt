@@ -1,0 +1,460 @@
+30 August : (join 2 TB Composite Key)
+
+To connect the RoleMaster and PageMaster tables using a composite key, without create a third table, often called a join table or a linking table, that holds the composite key composed of the primary keys from RoleMaster and PageMaster. This join table will represent the relationship between roles and pages.
+This is my final response according it want to create table :
+
+{
+"roleId" : "1",
+"roleName":"admin",
+"accessType":"read/write",
+"page-mapping":{
+        [ {
+              "page_id":1,
+              "page_name":"Dashboard page",
+              "page_type":"dashboard"
+              "isAssigned":true
+          },
+          {
+              "page_id":2,
+              "page_name":"Invoice Page",
+              "page_type":"report"
+              "isAssigned":true
+          }
+       ]
+}
+"createdDate": "2023-01-01T12:00:00",
+"createdBy":"user",
+"modifiedDate":"2023-01-01T12:00:00",
+"modifiedBy":"admin"
+}
+
+Solution :-
+1] create RoleMaster & pageMaster Model with OneToMany & ManyToOne Relationship
+RoleMaster:
+ 
+package com.ssd.dsviewer.entity;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+@Entity
+@Table(name = "db_viewer_role_master")
+public class RoleMaster {
+
+    @Id
+    private Long userRoleId;
+
+    private String roleName;
+    private String accessType;
+
+    @OneToMany(mappedBy = "roleMaster", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<PageMaster> page;
+
+    private LocalDateTime createdDate;
+    private String createdBy;
+    private LocalDateTime modifiedDate;
+    private String modifiedBy;
+    private boolean isDeleted;
+
+    // Default constructor
+    public RoleMaster() {}
+
+    // Getters and setters for the fields
+    public Long getUserRoleId() {
+        return userRoleId;
+    }
+
+    public void setUserRoleId(Long userRoleId) {
+        this.userRoleId = userRoleId;
+    }
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
+
+    public String getAccessType() {
+        return accessType;
+    }
+
+    public void setAccessType(String accessType) {
+        this.accessType = accessType;
+    }
+
+    public List<PageMaster> getPage() {
+        return page;
+    }
+
+    public void setPage(List<PageMaster> page) {
+        this.page = page;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public LocalDateTime getModifiedDate() {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate(LocalDateTime modifiedDate) {
+        this.modifiedDate = modifiedDate;
+    }
+
+    public String getModifiedBy() {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy(String modifiedBy) {
+        this.modifiedBy = modifiedBy;
+    }
+
+    public Boolean getDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+}
+
+PageMaster Model:
+
+@EmbeddedId: This annotation indicates that the id field is a composite primary key
+package com.ssd.dsviewer.entity;
+
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+@Entity
+@Table(name = "db_viewer_page_master")
+public class PageMaster {
+
+    @EmbeddedId
+    private PageMappingId id;
+
+    private String pageType;
+    private String pageName;
+    private Boolean isAssigned;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_role_id", nullable = false)
+    @JsonBackReference
+    private RoleMaster roleMaster;
+
+    public PageMaster() {
+    }
+
+    public PageMaster(PageMappingId id, String pageType, String pageName, Boolean isAssigned, RoleMaster roleMaster) {
+        this.id = id;
+        this.pageType = pageType;
+        this.pageName = pageName;
+        this.isAssigned = isAssigned;
+        this.roleMaster = roleMaster;
+    }
+
+    public PageMappingId getId() {
+        return id;
+    }
+
+    public void setId(PageMappingId id) {
+        this.id = id;
+    }
+
+    public String getPageType() {
+        return pageType;
+    }
+
+    public void setPageType(String pageType) {
+        this.pageType = pageType;
+    }
+
+    public String getPageName() {
+        return pageName;
+    }
+
+    public void setPageName(String pageName) {
+        this.pageName = pageName;
+    }
+
+    public Boolean getIsAssigned() {
+        return isAssigned;
+    }
+
+    public void setIsAssigned(Boolean isAssigned) {
+        this.isAssigned = isAssigned;
+    }
+
+    public RoleMaster getRoleMaster() {
+        return roleMaster;
+    }
+
+    public void setRoleMaster(RoleMaster roleMaster) {
+        this.roleMaster = roleMaster;
+    }
+}
+
+2] create PageMappingId model to join composite table :
+package com.ssd.dsviewer.entity;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+import javax.persistence.Embeddable;
+
+@Embeddable
+public class PageMappingId implements Serializable {
+
+    private static final long serialVersionUID = 1L; // Required for Serializable classes
+
+    private Long pageId;
+    private Long roleId;
+
+    // Default constructor
+    public PageMappingId() {}
+
+    // Parameterized constructor
+    public PageMappingId(Long pageId, Long roleId) {
+        this.pageId = pageId;
+        this.roleId = roleId;
+    }
+
+    // Getters and setters
+    public Long getPageId() {
+        return pageId;
+    }
+
+    public void setPageId(Long pageId) {
+        this.pageId = pageId;
+    }
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    // Equals and hashCode methods
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PageMappingId that = (PageMappingId) o;
+        return pageId.equals(that.pageId) && roleId.equals(that.roleId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pageId, roleId);
+    }
+}
+
+3] Create Repository of Page & Master
+
+4] Service implementation :
+
+e com.ssd.dsviewer.ServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import com.ssd.dsviewer.Repository.PageMasterRepository;
+import com.ssd.dsviewer.Repository.RoleMasterRepository;
+import com.ssd.dsviewer.entity.PageMappingId;
+import com.ssd.dsviewer.entity.PageMaster;
+import com.ssd.dsviewer.entity.RoleMaster;
+import com.ssd.dsviewer.service.RoleMasterService;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+
+@Service
+public class RoleMasterServiceImpl implements RoleMasterService {
+
+    @Autowired
+    private RoleMasterRepository roleMasterRepository;
+
+
+    @Override
+    public String createRoleWithPages(RoleMaster roleMasters,String userName) {
+        RoleMaster roleMaster = new RoleMaster();
+        try {
+            // Set RoleMaster fields from the input object
+            roleMaster.setUserRoleId(roleMasters.getUserRoleId());
+            roleMaster.setRoleName(roleMasters.getRoleName());
+            roleMaster.setAccessType(roleMasters.getAccessType());
+            roleMaster.setDeleted(roleMasters.getDeleted());
+
+
+                // Set creation details for a new role
+                roleMaster.setCreatedBy(userName);
+                roleMaster.setCreatedDate(LocalDateTime.now());
+                roleMaster.setModifiedBy(userName);
+                roleMaster.setModifiedDate(LocalDateTime.now());
+            
+
+            // Handle PageMaster list if present
+            List<PageMaster> pageMasterList = new ArrayList<>();
+            if (roleMasters.getPage() != null) {
+                for (PageMaster pageObj : roleMasters.getPage()) {
+                  PageMappingId pageMappingId = new PageMappingId();
+                  pageMappingId.setPageId(pageObj.getId().getPageId());  // Assuming you need to get PageId from PageMappingId
+                  pageMappingId.setRoleId(roleMasters.getUserRoleId());
+                    PageMaster pageMaster = new PageMaster();
+                    pageMaster.setId(pageMappingId);
+                    pageMaster.setPageType(pageObj.getPageType());
+                    pageMaster.setPageName(pageObj.getPageName());
+                    pageMaster.setIsAssigned(pageObj.getIsAssigned());
+                    pageMaster.setRoleMaster(roleMaster);
+                    pageMasterList.add(pageMaster);
+                }
+            }
+            roleMaster.setPage(pageMasterList);
+
+            // Save RoleMaster to the repository
+            roleMasterRepository.save(roleMaster);
+
+        } catch (Exception e) {
+            // Handle exceptions and return an error message
+            return "Error occurred while creating or updating role: " + e.getMessage();
+        }
+
+        return "Role created/updated successfully";
+    }
+    @Override
+    public Optional<RoleMaster> getRoleMasterById(Long roleId,String userName) {
+        return roleMasterRepository.findById(roleId);
+    }
+
+    @Override
+    public List<RoleMaster> getAllRoleMasters(String userName) {
+        return roleMasterRepository.findAll();
+    }
+    
+    @Override
+    public void deleteRoleMaster(Long roleId,String userName) {
+    	RoleMaster roleMaster = roleMasterRepository.findById(roleId).orElseThrow(
+    			() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found with id " + roleId));
+    	roleMaster.setDeleted(true);
+    	roleMasterRepository.save(roleMaster);
+    }
+
+}
+
+5] Controller:
+
+package com.ssd.dsviewer.Controller;
+
+import com.ssd.dsviewer.entity.RoleMaster;
+import com.ssd.dsviewer.response.RoleMasterDTO;
+import com.ssd.dsviewer.security.jwt.JwtUtils;
+import com.ssd.dsviewer.service.RoleMasterService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/roles")
+public class RoleMasterController {
+
+    @Autowired
+    private RoleMasterService roleMasterService;
+
+    @Autowired
+    JwtUtils jwtUtils;
+    
+    // Create or update a RoleMaster with associated pages
+    @PostMapping("/create")
+    public ResponseEntity<String> createRoleWithPages(@RequestHeader("Authorization") String jwtToken,@RequestBody RoleMaster roleMaster) {
+    	String userName = "System";
+    	if(jwtToken.startsWith("Bearer")) {
+    		userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7, jwtToken.length()));
+    	}
+        String result = roleMasterService.createRoleWithPages(roleMaster,userName);
+        return new ResponseEntity<>(result, result.contains("successfully") ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+    }
+
+    // Get a RoleMaster by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<RoleMaster> getRoleMasterById(@RequestHeader("Authorization") String jwtToken,@PathVariable Long id) {
+    	String userName = "System";
+    	if(jwtToken.startsWith("Bearer")) {
+    		userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7, jwtToken.length()));
+    	}
+        Optional<RoleMaster> roleMaster = roleMasterService.getRoleMasterById(id,userName);
+        return roleMaster.map(ResponseEntity::ok)
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // Get all RoleMasters
+    @GetMapping("/all")
+    public ResponseEntity<List<RoleMaster>> getAllRoleMasters(@RequestHeader("Authorization") String jwtToken) {
+    	String userName = "System";
+    	if(jwtToken.startsWith("Bearer")) {
+    		userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7, jwtToken.length()));
+    	}
+        List<RoleMaster> roleMasters = roleMasterService.getAllRoleMasters(userName);
+        return new ResponseEntity<>(roleMasters, HttpStatus.OK);
+    }
+
+
+
+    // Delete a RoleMaster by ID
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteRoleMaster(@RequestHeader("Authorization") String jwtToken,@PathVariable Long id) {
+    	String userName = "System";
+    	if(jwtToken.startsWith("Bearer")) {
+    		userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7, jwtToken.length()));
+    	}
+        roleMasterService.deleteRoleMaster(id,userName);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+}
+
+
+
+
+
+ 
