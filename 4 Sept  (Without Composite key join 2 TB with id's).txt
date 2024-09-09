@@ -1,0 +1,525 @@
+4 Sept : (Without Composite key join two TB Id's)
+RoleDemo model -
+
+package com.ssd.dsviewer.entity;
+
+import javax.persistence.*;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+ 
+@Entity
+@Table(name = "role")
+public class RoleDemo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    private String roleName;
+    private String accessType;
+    private LocalDateTime createdDate;
+    private String createdBy;
+    private LocalDateTime modifiedDate;
+    private String modifiedBy;
+    private boolean isDeleted;
+
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
+    private Set<RolePage> rolePages = new HashSet<>();
+
+    // Getters and Setters
+
+  
+
+    public Set<RolePage> getRolePages() {
+        return rolePages;
+    }
+
+    public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getRoleName() {
+		return roleName;
+	}
+
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+
+	public String getAccessType() {
+		return accessType;
+	}
+
+	public void setAccessType(String accessType) {
+		this.accessType = accessType;
+	}
+
+	public LocalDateTime getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(LocalDateTime createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public LocalDateTime getModifiedDate() {
+		return modifiedDate;
+	}
+
+	public void setModifiedDate(LocalDateTime modifiedDate) {
+		this.modifiedDate = modifiedDate;
+	}
+
+	public String getModifiedBy() {
+		return modifiedBy;
+	}
+
+	public void setModifiedBy(String modifiedBy) {
+		this.modifiedBy = modifiedBy;
+	}
+
+	public boolean isDeleted() {
+		return isDeleted;
+	}
+
+	public void setDeleted(boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+
+	public void setRolePages(Set<RolePage> rolePages) {
+        this.rolePages = rolePages;
+    }
+}
+
+Page model -
+
+package com.ssd.dsviewer.entity;
+import javax.persistence.*;
+
+@Entity
+@Table(name="page")
+public class Page {
+   @Id
+   @GeneratedValue(strategy = GenerationType.AUTO)
+   private Long id;
+
+   private String pageType;
+   private String pageName;
+
+public Long getId() {
+	return id;
+}
+
+public String getPageType() {
+	return pageType;
+}
+
+public void setPageType(String pageType) {
+	this.pageType = pageType;
+}
+
+public String getPageName() {
+	return pageName;
+}
+
+public void setPageName(String pageName) {
+	this.pageName = pageName;
+}
+
+public void setId(Long id) {
+	this.id = id;
+}
+}
+
+RolePage model in which id's of both role & page can be stored -
+
+package com.ssd.dsviewer.entity;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "role_page")
+public class RolePage {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private RoleDemo role;
+
+    @ManyToOne
+    @JoinColumn(name = "page_id")
+    private Page page;
+
+    private Boolean isAssigned;
+
+    // Getters and Setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public RoleDemo getRole() {
+        return role;
+    }
+
+    public void setRole(RoleDemo role) {
+        this.role = role;
+    }
+
+    public Page getPage() {
+        return page;
+    }
+
+    public void setPage(Page page) {
+        this.page = page;
+    }
+
+    public Boolean getIsAssigned() {
+        return isAssigned;
+    }
+
+    public void setIsAssigned(Boolean isAssigned) {
+        this.isAssigned = isAssigned;
+    }
+}
+DTO (Response Classes) -
+
+package com.ssd.dsviewer.response;
+
+import java.time.LocalDateTime;
+import java.util.Set;
+
+public class RoleMasterDTO {
+    private Long userRoleId;
+    private String roleName;
+    private String accessType;
+    private String createdBy;
+    private LocalDateTime createdDate;
+    private String modifiedBy;
+    private LocalDateTime modifiedDate;
+    private Set<PageMasterDTO> pages;
+    
+    // Getters and Setters
+	public Long getUserRoleId() {
+		return userRoleId;
+	}
+	public void setUserRoleId(Long userRoleId) {
+		this.userRoleId = userRoleId;
+	}
+	public String getRoleName() {
+		return roleName;
+	}
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+	public String getAccessType() {
+		return accessType;
+	}
+	public void setAccessType(String accessType) {
+		this.accessType = accessType;
+	}
+	public String getCreatedBy() {
+		return createdBy;
+	}
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+	public LocalDateTime getCreatedDate() {
+		return createdDate;
+	}
+	public void setCreatedDate(LocalDateTime createdDate) {
+		this.createdDate = createdDate;
+	}
+	public String getModifiedBy() {
+		return modifiedBy;
+	}
+	public void setModifiedBy(String modifiedBy) {
+		this.modifiedBy = modifiedBy;
+	}
+	public LocalDateTime getModifiedDate() {
+		return modifiedDate;
+	}
+	public void setModifiedDate(LocalDateTime modifiedDate) {
+		this.modifiedDate = modifiedDate;
+	}
+    public Set<PageMasterDTO> getPages() {
+        return pages;
+    }
+
+    public void setPages(Set<PageMasterDTO> pages) {
+        this.pages = pages;
+    }
+}
+
+
+service & implementation of above models:
+
+package com.ssd.dsviewer.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.ssd.dsviewer.Repository.PageRepository;
+import com.ssd.dsviewer.Repository.RoleDemoRepository;
+import com.ssd.dsviewer.entity.Page;
+import com.ssd.dsviewer.entity.RoleDemo;
+import com.ssd.dsviewer.entity.RolePage;
+import com.ssd.dsviewer.response.PageMasterDTO;
+import com.ssd.dsviewer.response.PageResponse;
+import com.ssd.dsviewer.response.PageSubResponse;
+import com.ssd.dsviewer.response.RoleMasterDTO;
+
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+ 
+@Service
+public class RolePageService {
+    @Autowired
+    private RoleDemoRepository roleRepository;
+ 
+    @Autowired
+    private PageRepository pageRepository;
+ 
+    // Role Methods
+    public List<RoleDemo> getAllRoles() {
+        return roleRepository.findAll();
+    }
+ 
+    public RoleDemo getRoleById(Long id) {
+        return roleRepository.findById(id).orElse(null);
+    }
+ 
+    public RoleDemo saveRole(RoleDemo role) {
+    	
+        return roleRepository.save(role);
+    }
+ 
+    public void deleteRole(Long id) {
+        roleRepository.deleteById(id);
+    }
+ 
+    // Page Methods
+    public List<Page> getAllPages() {
+        return pageRepository.findAll();
+    }
+ 
+    public Page getPageById(Long id) {
+        return pageRepository.findById(id).orElse(null);
+    }
+ 
+    public Page savePage(Page page) {
+        return pageRepository.save(page);
+    }
+ 
+    public RoleMasterDTO createRoleWithPages(RoleMasterDTO roleDTO,String userName) {
+        RoleDemo role = new RoleDemo();
+        role.setId(roleDTO.getUserRoleId());
+        role.setRoleName(roleDTO.getRoleName());
+        role.setAccessType(roleDTO.getAccessType());
+        role.setCreatedBy(userName);
+        role.setCreatedDate(LocalDateTime.now());
+        role.setModifiedBy(userName);
+        role.setModifiedDate(LocalDateTime.now());
+
+        Set<RolePage> rolePages = new HashSet<>();
+        for (PageMasterDTO pageDTO : roleDTO.getPages()) {
+            Page page = pageRepository.findByPageNameAndPageType(pageDTO.getPageName(), pageDTO.getPageType());
+
+            RolePage rolePage = new RolePage();
+            rolePage.setRole(role);
+            rolePage.setPage(page);
+            rolePage.setIsAssigned(true); // or whatever logic you want for isAssigned
+
+            rolePages.add(rolePage);
+        }
+
+        role.setRolePages(rolePages);
+
+        RoleDemo savedRole = roleRepository.save(role);
+        return mapToDTO(savedRole);
+    }
+    
+    private RoleMasterDTO mapToDTO(RoleDemo roleDemo) {
+        RoleMasterDTO dto = new RoleMasterDTO();
+        dto.setUserRoleId(roleDemo.getId());
+        dto.setRoleName(roleDemo.getRoleName());
+        dto.setAccessType(roleDemo.getAccessType());
+        dto.setCreatedBy(roleDemo.getCreatedBy());
+        dto.setCreatedDate(roleDemo.getCreatedDate());
+        dto.setModifiedBy(roleDemo.getModifiedBy());
+        dto.setModifiedDate(roleDemo.getModifiedDate());
+
+        Set<PageMasterDTO> pageDTOs = new HashSet<>();
+        for (RolePage rolePage : roleDemo.getRolePages()) {
+            PageMasterDTO pageDTO = new PageMasterDTO();
+            pageDTO.setPageName(rolePage.getPage().getPageName());
+            pageDTO.setPageType(rolePage.getPage().getPageType());
+            pageDTOs.add(pageDTO);
+        }
+        dto.setPages(pageDTOs);
+
+        return dto;
+    }
+
+	public void deletePage(Long id) {
+        pageRepository.deleteById(id);
+    }
+	
+	
+	public List<PageSubResponse> getPageCategories() {
+	    List<Page> pages = pageRepository.findAll();
+
+	    // Group pages by pageType and map to PageResponse
+	    Map<String, List<PageResponse>> groupedPages = pages.stream()
+	            .collect(Collectors.groupingBy(
+	                    Page::getPageType,
+	                    Collectors.mapping(
+	                            page -> new PageResponse(page.getId(), page.getPageName()),
+	                            Collectors.toList()
+	                    )
+	            ));
+
+	    // AtomicLong to generate unique IDs for PageSubResponse
+	    AtomicLong idCounter = new AtomicLong(1);
+
+	    // Convert to PageSubResponse list with default isSelected value and unique IDs
+	    List<PageSubResponse> pageCategories = groupedPages.entrySet().stream()
+	            .map(entry -> new PageSubResponse(
+	                    idCounter.getAndIncrement(), // Assign a unique ID
+	                    entry.getKey(),             // PageType
+	                    false,                      // Default value for isSelected
+	                    entry.getValue()            // List of PageResponse
+	            ))
+	            .collect(Collectors.toList());
+
+	    return pageCategories;
+	}
+ 
+}
+
+Controller -
+package com.ssd.dsviewer.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.ssd.dsviewer.entity.Page;
+import com.ssd.dsviewer.entity.RoleDemo;
+import com.ssd.dsviewer.response.PageSubResponse;
+import com.ssd.dsviewer.response.RoleMasterDTO;
+import com.ssd.dsviewer.security.jwt.JwtUtils;
+import com.ssd.dsviewer.service.RolePageService;
+
+import java.util.List;
+
+import javax.validation.Valid;
+@CrossOrigin("*")
+@RestController
+@RequestMapping("/api/demo")
+public class RolePageController {
+    @Autowired
+    private RolePageService rolePageService;
+    
+    @Autowired
+    JwtUtils jwtUtils;
+ 
+    // Role Endpoints
+    @GetMapping("/roles")
+    public List<RoleDemo> getAllRoles() {
+        return rolePageService.getAllRoles();
+    }
+ 
+    @GetMapping("/roles/{id}")
+    public RoleDemo getRoleById(@PathVariable Long id) {
+        return rolePageService.getRoleById(id);
+    }
+ 
+    @PostMapping("/roles")
+    public RoleDemo createRole(@RequestBody RoleDemo role) {
+        return rolePageService.saveRole(role);
+    }
+ 
+    @DeleteMapping("/roles/{id}")
+    public void deleteRole(@PathVariable Long id) {
+        rolePageService.deleteRole(id);
+    }
+ 
+    // Page Endpoints
+    @GetMapping("/pages")
+    public List<Page> getAllPages() {
+        return rolePageService.getAllPages();
+    }
+ 
+    @GetMapping("/pages/{id}")
+    public Page getPageById(@PathVariable Long id) {
+        return rolePageService.getPageById(id);
+    }
+ 
+    @PostMapping("/pages")
+    public Page createPage(@RequestBody Page page) {
+        return rolePageService.savePage(page);
+    }
+ 
+    @DeleteMapping("/pages/{id}")
+    public void deletePage(@PathVariable Long id) {
+        rolePageService.deletePage(id);
+    }
+ 
+
+    //post response with mapping 
+    @PostMapping("/create")
+    public ResponseEntity<RoleMasterDTO> createRoleWithPages(@RequestHeader("Authorization") String jwtToken,@Valid @RequestBody RoleMasterDTO roleDTO) {
+    	String userName = "System";
+    	if(jwtToken.startsWith("Bearer")) {
+    		userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7, jwtToken.length()));
+    	}
+        try {
+            RoleMasterDTO createdRole = rolePageService.createRoleWithPages(roleDTO,userName);
+            return new ResponseEntity<>(createdRole, HttpStatus.CREATED);
+        } catch (Exception e) {
+            // Handle exceptions and return an appropriate error response
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    //page response to handle frontend activities
+    @GetMapping("/pageResponse")
+    public ResponseEntity<List<PageSubResponse>> getPageCategories(@RequestHeader("Authorization") String jwtToken) {
+    	String userName = "System";
+    	if(jwtToken.startsWith("Bearer")) {
+    		userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7, jwtToken.length()));
+    	}
+        List<PageSubResponse> pageCategories = rolePageService.getPageCategories();
+        return ResponseEntity.ok(pageCategories);
+    }
+    
+}
+
