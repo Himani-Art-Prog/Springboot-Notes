@@ -1,0 +1,262 @@
+5 Sept - Page Response
+(Arrange My page Response For Frontend)
+(Role model Complete Working Code With Understanding)
+Without make changes in actual model I arrange my get url response according my frontend Code 
+# response.data :
+[
+
+  {
+
+    id: 1,
+
+    pageType: 'Data Connectors',
+
+    pages: Array(10) [
+
+      { id: 401, pageName: 'DCS Connectors of Hg' },
+
+      { id: 402, pageName: 'OPD Connectors of HP' },
+
+      { id: 403, pageName: 'POd Connectors of LG' },
+
+      { id: 404, pageName: 'HP Connectors of OP' },
+
+      { id: 405, pageName: 'TSC Connectors of TP' },
+
+      { id: 406, pageName: 'UDS Connectors of OD' },
+
+      { id: 407, pageName: 'PPT Connectors of PT' },
+
+      { id: 408, pageName: 'RRT Connectors of RR' },
+
+      { id: 409, pageName: 'IP Connectors of IPS' },
+
+      { id: 410, pageName: 'LTP Connectors of TP' }
+
+    ],
+
+    selected: false
+
+  },
+
+  {
+
+    id: 2,
+
+    pageType: 'Report',
+
+    pages: [
+
+      { id: 301, pageName: 'Report of heat generation' },
+
+      { id: 302, pageName: 'Report of water consumption' },
+
+      { id: 303, pageName: 'Report of electricity' },
+
+      { id: 304, pageName: 'Report of fuel' },
+
+      { id: 305, pageName: 'Report of connectors' }
+
+    ],
+
+    selected: false
+
+  },
+
+  {
+
+    id: 3,
+
+    pageType: 'Dashboard',
+
+    pages: Array(15) [
+
+      { id: 101, pageName: 'Home Page' },
+
+      { id: 102, pageName: 'About Page' },
+
+      { id: 103, pageName: 'CPP Control Page' },
+
+      { id: 104, pageName: 'TPS Overview Page' },
+
+      { id: 105, pageName: 'Heat Consumption Page' },
+
+      { id: 106, pageName: 'Electricity Consumption Page' },
+
+      { id: 107, pageName: 'Boiler Calculations' },
+
+      { id: 108, pageName: 'Hydrogen Generation' },
+
+      { id: 109, pageName: 'AWN Units Pages' },
+
+      { id: 110, pageName: 'Fuel Page' },
+
+      { id: 111, pageName: 'Water Consumption Page' },
+
+      { id: 112, pageName: 'Petrol Consumption Page' },
+
+      { id: 113, pageName: 'Heat Calculations' },
+
+      { id: 114, pageName: 'Units Generation' },
+
+      { id: 115, pageName: 'Dynamic Units Pages' }
+
+    ],
+
+    selected: false
+
+  },
+
+  {
+
+    id: 4,
+
+    pageType: 'Admin',
+
+    pages: Array(9) [
+
+      { id: 201, pageName: 'Company Details' },
+
+      { id: 202, pageName: 'User Details' },
+
+      { id: 203, pageName: 'Subscription Details' },
+
+      { id: 204, pageName: 'Invoice Details' },
+
+      { id: 205, pageName: 'Report of Subscriptions' },
+
+      { id: 206, pageName: 'Company details table' },
+
+      { id: 207, pageName: 'User details table' },
+
+      { id: 208, pageName: 'Invoice details table' },
+
+      { id: 209, pageName: 'Admin Center Complete Report' }
+
+    ],
+
+    selected: false
+
+  }
+
+]
+
+Updated Code inside 9 sept file here I only show DTO & service
+
+1] Page Response (DTO) :
+package com.ssd.dsviewer.response;
+
+import java.util.List;
+
+public class PageResponse {
+    private Long id;
+    private String pageName;
+
+    // Constructors, getters, and setters
+    public PageResponse(Long id, String pageName) {
+        this.id = id;
+        this.pageName = pageName;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPageName() {
+        return pageName;
+    }
+
+    public void setPageName(String pageName) {
+        this.pageName = pageName;
+    }
+}
+
+
+2] Page Sub Response(DTO) :
+
+package com.ssd.dsviewer.response;
+
+import java.util.List;
+
+public class PageSubResponse {
+    private Long id;              // New field for the ID
+    private String pageType;
+    private boolean isSelected;
+    private List<PageResponse> pages;
+
+    public PageSubResponse(Long id, String pageType, boolean isSelected, List<PageResponse> pages) {
+        this.id = id;              // Initialize ID
+        this.pageType = pageType;
+        this.isSelected = isSelected;
+        this.pages = pages;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPageType() {
+        return pageType;
+    }
+
+    public void setPageType(String pageType) {
+        this.pageType = pageType;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
+    }
+
+    public List<PageResponse> getPages() {
+        return pages;
+    }
+
+    public void setPages(List<PageResponse> pages) {
+        this.pages = pages;
+    }
+}
+
+3] Services : 
+	public List<PageSubResponse> getPageCategories() {
+	    List<Page> pages = pageRepository.findAll();
+
+	    // Group pages by pageType and map to PageResponse
+	    Map<String, List<PageResponse>> groupedPages = pages.stream()
+	            .collect(Collectors.groupingBy(
+	                    Page::getPageType,
+	                    Collectors.mapping(
+	                            page -> new PageResponse(page.getId(), page.getPageName()),
+	                            Collectors.toList()
+	                    )
+	            ));
+
+	    // AtomicLong to generate unique IDs for PageSubResponse
+	    AtomicLong idCounter = new AtomicLong(1);
+
+	    // Convert to PageSubResponse list with default isSelected value and unique IDs
+	    List<PageSubResponse> pageCategories = groupedPages.entrySet().stream()
+	            .map(entry -> new PageSubResponse(
+	                    idCounter.getAndIncrement(), // Assign a unique ID
+	                    entry.getKey(),             // PageType
+	                    false,                      // Default value for isSelected
+	                    entry.getValue()            // List of PageResponse
+	            ))
+	            .collect(Collectors.toList());
+
+	    return pageCategories;
+	}
+	
+
