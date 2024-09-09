@@ -1,0 +1,405 @@
+28 - August (Role Table Structure )
+role name: admin
+access : Read / Write
+
+page name - page type (format)
+
+Home Page - dashboard
+About Page - dashboard
+
+Company Details Page - admin
+User Details Page - admin
+
+Report of heat generation - report
+Report of water consumption - report
+
+DCS Connectors of Hg - data connectors
+OPD Connectors of HP - data connectors
+
+In Backend, Table Design for above requirement :
+PageMaster ---------------------------------------------
+package com.ssd.dsviewer.entity;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+@Entity
+@Table(name = "db_viewer_page_master")
+public class PageDataMaster {
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long pageId;
+
+	private String roleName;
+    private String accessType;
+    
+   
+    @OneToMany(mappedBy = "pageDataMaster", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<PageNameWithType> pageNameWithTypes = new ArrayList<>();
+    
+    public PageDataMaster() {
+    	
+    }
+    public Long getPageId() {
+	return pageId;
+}
+
+    
+    public void setPageId(Long pageId) {
+	this.pageId = pageId;
+}
+
+    public String getRoleName() {
+	return roleName;
+}
+
+    public void setRoleName(String roleName) {
+	this.roleName = roleName;
+}
+
+    public String getAccessType() {
+	return accessType;
+}
+
+     public void setAccessType(String accessType) {
+ 	this.accessType = accessType;
+}
+	public List<PageNameWithType> getPageNameWithTypes() {
+		return pageNameWithTypes;
+	}
+	public void setPageNameWithTypes(List<PageNameWithType> pageNameWithTypes) {
+		this.pageNameWithTypes = pageNameWithTypes;
+	}
+	public PageDataMaster(Long pageId, String roleName, String accessType, List<PageNameWithType> pageNameWithTypes) {
+		super();
+		this.pageId = pageId;
+		this.roleName = roleName;
+		this.accessType = accessType;
+		this.pageNameWithTypes = pageNameWithTypes;
+	} 
+}
+
+PageType ------------------------------------------------
+Here I used Enum to define contants,
+package com.ssd.dsviewer.entity;
+
+public enum PageDataType {
+    DASHBOARD,
+    ADMIN,
+    REPORT,
+    DATA_CONNECTORS
+}
+
+PageNameWithType --------------------------------------
+
+package com.ssd.dsviewer.entity;
+
+import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+
+@Entity
+@Table(name = "db_viewer_page_name_type")
+public class PageNameWithType {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "page_data_type")
+    private PageDataType pageDataType; // e.g., "DASHBOARD", "ADMIN", "REPORT", "DATA_CONNECTORS"
+
+    private String pageName; // e.g., "Company Details Page", "User Management Page"
+
+    @ManyToOne
+    @JoinColumn(name = "page_id")
+    @JsonBackReference
+    private PageDataMaster pageDataMaster;
+
+    // Default constructor (required by Hibernate)
+    public PageNameWithType() {
+    }
+
+    // Constructor with arguments
+    public PageNameWithType(Long id, PageDataType pageDataType, String pageName, PageDataMaster pageDataMaster) {
+        this.id = id;
+        this.pageDataType = pageDataType;
+        this.pageName = pageName;
+        this.pageDataMaster = pageDataMaster;
+    }
+
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public PageDataType getPageDataType() {
+		return pageDataType;
+	}
+
+	public void setPageDataType(PageDataType pageDataType) {
+		this.pageDataType = pageDataType;
+	}
+
+	public String getPageName() {
+        return pageName;
+    }
+
+    public void setPageName(String pageName) {
+        this.pageName = pageName;
+    }
+
+    public PageDataMaster getPageDataMaster() {
+        return pageDataMaster;
+    }
+
+    public void setPageDataMaster(PageDataMaster pageDataMaster) {
+        this.pageDataMaster = pageDataMaster;
+    }
+}
+
+Repository is as it is, that we create for all.
+
+service implementation
+
+package com.ssd.dsviewer.ServiceImpl;
+
+import com.ssd.dsviewer.entity.PageDataMaster;
+import com.ssd.dsviewer.entity.PageNameWithType;
+import com.ssd.dsviewer.Repository.PageDataMasterRepository;
+import com.ssd.dsviewer.Repository.PageDataNameWithTypeRepository;
+import com.ssd.dsviewer.service.PageDataService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
+
+@Service
+public class PageDataServiceImpl implements PageDataService {
+
+    @Autowired
+    private PageDataMasterRepository pageDataMasterRepository;
+
+    @Autowired
+    private PageDataNameWithTypeRepository pageNameWithTypeRepository;
+
+    // PageDataMaster operations
+
+    @Transactional
+    public PageDataMaster savePageDataMaster(PageDataMaster pageDataMaster) {
+        // Ensure that pageNameWithTypes are correctly linked to pageDataMaster
+        for (PageNameWithType pageNameWithType : pageDataMaster.getPageNameWithTypes()) {
+            pageNameWithType.setPageDataMaster(pageDataMaster);
+        }
+        return pageDataMasterRepository.save(pageDataMaster);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageDataMaster getPageDataMasterById(Long id) {
+        return pageDataMasterRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("PageDataMaster not found with ID: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PageDataMaster> getAllPageDataMasters() {
+        return pageDataMasterRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public void deletePageDataMaster(Long id) {
+        if (pageDataMasterRepository.existsById(id)) {
+            pageDataMasterRepository.deleteById(id);
+        } else {
+            throw new EntityNotFoundException("PageDataMaster not found with ID: " + id);
+        }
+    }
+
+    // Combined PageData operations (formerly PageDataType and PageNameWithType)
+
+    @Override
+    @Transactional
+    public PageNameWithType savePageData(PageNameWithType pageData) {
+        return pageNameWithTypeRepository.save(pageData);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageNameWithType getPageDataById(Long id) {
+        return pageNameWithTypeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("PageNameWithType not found with ID: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PageNameWithType> getAllPageData() {
+        return pageNameWithTypeRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public void deletePageData(Long id) {
+        if (pageNameWithTypeRepository.existsById(id)) {
+            pageNameWithTypeRepository.deleteById(id);
+        } else {
+            throw new EntityNotFoundException("PageNameWithType not found with ID: " + id);
+        }
+    }
+}
+
+Controller for It
+package com.ssd.dsviewer.Controller;
+
+import com.ssd.dsviewer.entity.PageDataMaster;
+import com.ssd.dsviewer.entity.PageNameWithType;
+import com.ssd.dsviewer.security.jwt.JwtUtils;
+import com.ssd.dsviewer.service.PageDataService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/page")
+public class PageDataController {
+
+    @Autowired
+    private PageDataService pageDataService;
+    
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    // PageDataMaster endpoints
+
+    @PostMapping
+    public ResponseEntity<PageDataMaster> createPageDataMaster(@RequestHeader("Authorization") String jwtToken, @RequestBody PageDataMaster pageDataMaster) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        // Link each PageNameWithType to the provided PageDataMaster
+        for (PageNameWithType pageNameWithType : pageDataMaster.getPageNameWithTypes()) {
+            pageNameWithType.setPageDataMaster(pageDataMaster);
+        }
+
+        PageDataMaster savedPageDataMaster = pageDataService.savePageDataMaster(pageDataMaster);
+        return new ResponseEntity<>(savedPageDataMaster, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PageDataMaster> getPageDataMasterById(@RequestHeader("Authorization") String jwtToken, @PathVariable Long id) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        PageDataMaster pageDataMaster = pageDataService.getPageDataMasterById(id);
+        if (pageDataMaster != null) {
+            return new ResponseEntity<>(pageDataMaster, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/allpages")
+    public ResponseEntity<List<PageDataMaster>> getAllPageDataMasters(@RequestHeader("Authorization") String jwtToken) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        List<PageDataMaster> pageDataMasters = pageDataService.getAllPageDataMasters();
+        return new ResponseEntity<>(pageDataMasters, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/masters/{id}")
+    public ResponseEntity<Void> deletePageDataMaster(@RequestHeader("Authorization") String jwtToken, @PathVariable Long id) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        pageDataService.deletePageDataMaster(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    // PageNameWithType endpoints
+
+    @PostMapping("/names")
+    public ResponseEntity<PageNameWithType> createPageNameWithType(@RequestHeader("Authorization") String jwtToken, @RequestBody PageNameWithType pageNameWithType) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        PageNameWithType savedPageNameWithType = pageDataService.savePageData(pageNameWithType);
+        return new ResponseEntity<>(savedPageNameWithType, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/names/{id}")
+    public ResponseEntity<PageNameWithType> getPageNameWithTypeById(@RequestHeader("Authorization") String jwtToken, @PathVariable Long id) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        PageNameWithType pageNameWithType = pageDataService.getPageDataById(id);
+        if (pageNameWithType != null) {
+            return new ResponseEntity<>(pageNameWithType, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/names")
+    public ResponseEntity<List<PageNameWithType>> getAllPageNamesWithTypes(@RequestHeader("Authorization") String jwtToken) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        List<PageNameWithType> pageNameWithTypes = pageDataService.getAllPageData();
+        return new ResponseEntity<>(pageNameWithTypes, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/names/{id}")
+    public ResponseEntity<Void> deletePageNameWithType(@RequestHeader("Authorization") String jwtToken, @PathVariable Long id) {
+        String userName = "system";
+        if (jwtToken.startsWith("Bearer")) {
+            userName = jwtUtils.getUserNameFromJwtToken(jwtToken.substring(7));
+        }
+
+        pageDataService.deletePageData(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+}
+
+
+
+
+
+
